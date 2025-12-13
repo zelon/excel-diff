@@ -1,0 +1,6 @@
+src/ExcelDiff.App/bin
+src/ExcelDiff.App/obj
+src/ExcelDiff.Core/bin
+src/ExcelDiff.Core/obj
+src/ExcelDiff.Tests/bin
+src/ExcelDiff.Tests/obj

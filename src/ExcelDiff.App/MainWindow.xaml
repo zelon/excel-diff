@@ -1,0 +1,169 @@
+﻿<Window x:Class="ExcelDiff.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ExcelDiff.App"
+        xmlns:vm="clr-namespace:ExcelDiff.App.ViewModels"
+        xmlns:converters="clr-namespace:ExcelDiff.App.Converters"
+        xmlns:helpers="clr-namespace:ExcelDiff.App.Helpers"
+        mc:Ignorable="d"
+        Title="Excel Diff Tool" Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <converters:DiffTypeToColorConverter x:Key="DiffTypeToColorConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 파일 선택 영역 -->
+        <Grid Grid.Row="0" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Old 파일 -->
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Old 파일:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding OldFilePath}" IsReadOnly="True" VerticalAlignment="Center" Margin="0,0,10,5"/>
+            <Button Grid.Row="0" Grid.Column="2" Content="찾아보기..." Command="{Binding LoadOldFileCommand}" Width="100" Margin="0,0,0,5"/>
+
+            <!-- New 파일 -->
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="New 파일:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewFilePath}" IsReadOnly="True" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Button Grid.Row="1" Grid.Column="2" Content="비교" Command="{Binding CompareCommand}" Width="100" FontWeight="Bold"/>
+        </Grid>
+
+        <!-- 로딩 오버레이 -->
+        <Grid Grid.Row="1" Background="#80000000" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="처리 중..." Foreground="White" FontSize="24" HorizontalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20" Margin="0,10,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- 비교 결과 영역 -->
+        <TabControl Grid.Row="1"
+                    ItemsSource="{Binding SheetComparisons}"
+                    SelectedItem="{Binding SelectedSheetComparison}"
+                    Margin="10,0,10,5">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding SheetName}" FontWeight="Bold"/>
+                        <TextBlock Text=" (" Margin="5,0,0,0"/>
+                        <TextBlock Text="{Binding Statistics.ChangedCells}" Foreground="Red"/>
+                        <TextBlock Text=")"/>
+                    </StackPanel>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 통계 패널 -->
+                        <Border Grid.Row="0" Background="#F0F0F0" Padding="10" Margin="0,0,0,5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="전체: " FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Statistics.TotalCells}" Margin="0,0,15,0"/>
+
+                                <TextBlock Text="추가: " FontWeight="Bold" Foreground="Green"/>
+                                <TextBlock Text="{Binding Statistics.AddedCells}" Foreground="Green" Margin="0,0,15,0"/>
+
+                                <TextBlock Text="삭제: " FontWeight="Bold" Foreground="Red"/>
+                                <TextBlock Text="{Binding Statistics.DeletedCells}" Foreground="Red" Margin="0,0,15,0"/>
+
+                                <TextBlock Text="수정: " FontWeight="Bold" Foreground="DarkOrange"/>
+                                <TextBlock Text="{Binding Statistics.ModifiedCells}" Foreground="DarkOrange" Margin="0,0,15,0"/>
+
+                                <TextBlock Text="변경률: " FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Statistics.ChangePercentage, StringFormat={}{0:F2}%}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 사이드바이사이드 뷰 -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="5"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Old DataGrid -->
+                            <DataGrid Grid.Column="0"
+                                      ItemsSource="{Binding OldRows}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="All"
+                                      RowHeaderWidth="50"
+                                      helpers:DataGridHelper.AutoGenerateCellColumns="True"
+                                      helpers:ScrollSyncHelper.ScrollGroup="SheetComparison"
+                                      EnableRowVirtualization="True"
+                                      EnableColumnVirtualization="True"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                                <DataGrid.RowHeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding RowNumber}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGrid.RowHeaderTemplate>
+                            </DataGrid>
+
+                            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="Gray"/>
+
+                            <!-- New DataGrid -->
+                            <DataGrid Grid.Column="2"
+                                      ItemsSource="{Binding NewRows}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="All"
+                                      RowHeaderWidth="50"
+                                      helpers:DataGridHelper.AutoGenerateCellColumns="True"
+                                      helpers:ScrollSyncHelper.ScrollGroup="SheetComparison"
+                                      EnableRowVirtualization="True"
+                                      EnableColumnVirtualization="True"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                                <DataGrid.RowHeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding RowNumber}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGrid.RowHeaderTemplate>
+                            </DataGrid>
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
+
+        <!-- 상태 표시줄 -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
