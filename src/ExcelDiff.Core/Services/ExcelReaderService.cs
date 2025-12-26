@@ -14,7 +14,9 @@ public class ExcelReaderService : IExcelReader
 
         var excelFile = new ExcelFile(filePath);
 
-        using var workbook = new XLWorkbook(filePath);
+        // 파일이 Excel에서 열려있어도 읽을 수 있도록 FileShare.ReadWrite 옵션 사용
+        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var workbook = new XLWorkbook(stream);
 
         foreach (var worksheet in workbook.Worksheets)
         {
@@ -32,7 +34,9 @@ public class ExcelReaderService : IExcelReader
             throw new FileNotFoundException($"Excel 파일을 찾을 수 없습니다: {filePath}");
         }
 
-        using var workbook = new XLWorkbook(filePath);
+        // 파일이 Excel에서 열려있어도 읽을 수 있도록 FileShare.ReadWrite 옵션 사용
+        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var workbook = new XLWorkbook(stream);
         var worksheet = workbook.Worksheet(sheetName);
 
         if (worksheet == null)
