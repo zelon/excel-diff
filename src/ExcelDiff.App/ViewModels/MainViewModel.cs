@@ -131,4 +131,23 @@ public partial class MainViewModel : ObservableObject
     {
         CompareCommand.NotifyCanExecuteChanged();
     }
+
+    /// <summary>
+    /// 파일 경로를 설정하고 자동으로 비교를 실행합니다.
+    /// 명령줄 인자로 파일을 받았을 때 사용됩니다.
+    /// </summary>
+    public async void LoadFilesAndCompare(string oldFilePath, string newFilePath)
+    {
+        OldFilePath = oldFilePath;
+        NewFilePath = newFilePath;
+
+        // UI가 업데이트되도록 잠시 대기
+        await Task.Delay(100);
+
+        // 비교 실행
+        if (CompareCommand.CanExecute(null))
+        {
+            await CompareAsync();
+        }
+    }
 }
