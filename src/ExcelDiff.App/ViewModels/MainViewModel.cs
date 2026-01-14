@@ -21,6 +21,9 @@ public partial class MainViewModel : ObservableObject
     private string _newFilePath = string.Empty;
 
     [ObservableProperty]
+    private string _keyColumn = string.Empty;
+
+    [ObservableProperty]
     private SheetComparisonViewModel? _selectedSheetComparison;
 
     [ObservableProperty]
@@ -80,7 +83,7 @@ public partial class MainViewModel : ObservableObject
             var newFile = await Task.Run(() => _excelReader.ReadExcelFile(NewFilePath));
 
             StatusMessage = "비교 중...";
-            var diffResults = await Task.Run(() => _diffEngine.CompareExcelFiles(oldFile, newFile));
+            var diffResults = await Task.Run(() => _diffEngine.CompareExcelFiles(oldFile, newFile, KeyColumn));
 
             StatusMessage = "결과 표시 중...";
             foreach (var result in diffResults)

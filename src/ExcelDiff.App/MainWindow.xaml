@@ -33,6 +33,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -50,8 +51,13 @@
             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewFilePath}" IsReadOnly="True" VerticalAlignment="Center" Margin="0,0,10,5"/>
             <Button Grid.Row="1" Grid.Column="2" Content="찾아보기..." Command="{Binding LoadNewFileCommand}" Width="100" Margin="0,0,0,5"/>
 
+            <!-- 기준 컬럼 -->
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="기준 컬럼:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding KeyColumn, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="0,0,10,5"
+                     ToolTip="행 매칭을 위한 기준 컬럼 (예: A, B, C 등). 비워두면 셀 위치 기반 비교"/>
+
             <!-- 비교 버튼 -->
-            <Button Grid.Row="2" Grid.Column="2" Content="비교" Command="{Binding CompareCommand}" Width="100" FontWeight="Bold"/>
+            <Button Grid.Row="3" Grid.Column="2" Content="비교" Command="{Binding CompareCommand}" Width="100" FontWeight="Bold"/>
         </Grid>
 
         <!-- 로딩 오버레이 -->
